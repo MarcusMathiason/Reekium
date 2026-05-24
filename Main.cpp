@@ -3,8 +3,9 @@
 #include <SDL2/SDL_opengl.h>
 #include <iostream>
 #include "ShaderUtil.h"
+#include <chrono>
 
-void render();
+void render(GLint uniColor, float timeElapsed);
 
 SDL_Window* window;
 SDL_GLContext ctx;
@@ -72,13 +73,21 @@ int main() {
   glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2*sizeof(float), (void*)0);
   glEnableVertexAttribArray(0);
 
+  GLint uniColor = glGetUniformLocation(shaderProgram, "triColor");
+  glUniform3f(uniColor, 1.0f, 0.0f, 0.0f);
+
+  auto t_start = std::chrono::high_resolution_clock::now();
   
+  // main loop
   while (running) {
     while (SDL_PollEvent(&e)) {
       if (e.type == SDL_QUIT) running = false;
     }
 
-    render();
+    auto t_now = std::chrono::high_resolution_clock::now();
+    float timeElapsed = std::chrono::duration_cast<std::chrono::duration<float>>(t_now - t_start).count();
+
+    render(uniColor, timeElapsed);
     SDL_GL_SwapWindow(window);
   }
 
@@ -90,8 +99,10 @@ int main() {
 
 }
 
-void render() {
+void render(GLint uniColor, float timeElapsed) {
   glClear(GL_COLOR_BUFFER_BIT);
   
   glDrawArrays(GL_TRIANGLES, 0, 3);
+
+  glUniform3f(uniColor, (sin(timeElapsed * 4.0f) + 1.0f) / 2.0f, (sin(timeElapsed * 3.0f) + 1.0f), (sin(timeElapsed * 2.0f) + 1.0f));
 }
