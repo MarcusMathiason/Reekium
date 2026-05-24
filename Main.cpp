@@ -43,6 +43,11 @@ int main() {
     return 1;
   }
 
+  // Set window icon
+  SDL_Surface* icon = SDL_LoadBMP("res/icon.png");
+  SDL_SetWindowIcon(window, icon);
+  SDL_FreeSurface(icon);
+
   GLuint shaderProgram = ShaderUtil::createShaderProgram(
     "shaders/vertex.glsl",
     "shaders/fragment.glsl"
