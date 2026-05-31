@@ -62,19 +62,33 @@ int main() {
   
   GLuint vao, vbo;
 
-  float vertices[] = {
-    0.0f, 0.5f, 1.0f, 0.0f, 0.0f,
-    0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
-    -0.5f, -0.5f, 1.0f, 0.0f, 1.0f,
-  };
-
   glGenVertexArrays(1, &vao);
   glBindVertexArray(vao);
-  
+
   glGenBuffers(1, &vbo);
+
+  GLfloat vertices[] = {
+  -0.5f,  0.5f, 1.0f, 0.0f, 0.0f, // Top-left
+         0.5f,  0.5f, 0.0f, 1.0f, 0.0f, // Top-right
+         0.5f, -0.5f, 0.0f, 0.0f, 1.0f, // Bottom-right
+        -0.5f, -0.5f, 1.0f, 1.0f, 1.0f,  // Bottom-left
+        0.0f, 0.5f, 1.0f, 0.0f, 0.0f // Top-middle
+    };
+
   glBindBuffer(GL_ARRAY_BUFFER, vbo);
   glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
+  GLuint ebo;
+  glGenBuffers(1, &ebo);
+
+  GLuint elements[] = {
+    1, 2, 0,
+    2, 3, 0
+  };
+  
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(elements), elements, GL_STATIC_DRAW);
+  
   GLint posAttrib = glGetAttribLocation(shaderProgram, "position");
   glEnableVertexAttribArray(posAttrib);
 
@@ -85,7 +99,7 @@ int main() {
   glVertexAttribPointer(colAttrib, 3, GL_FLOAT, GL_FALSE, 5*sizeof(float), (void*)(2*sizeof(float)));
 
 
-  auto t_start = std::chrono::high_resolution_clock::now();
+  //auto t_start = std::chrono::high_resolution_clock::now();
   
   // main loop
   while (running) {
@@ -93,8 +107,8 @@ int main() {
       if (e.type == SDL_QUIT) running = false;
     }
 
-    auto t_now = std::chrono::high_resolution_clock::now();
-    float timeElapsed = std::chrono::duration_cast<std::chrono::duration<float>>(t_now - t_start).count();
+    //auto t_now = std::chrono::high_resolution_clock::now();
+    //float timeElapsed = std::chrono::duration_cast<std::chrono::duration<float>>(t_now - t_start).count();
 
     render();
     SDL_GL_SwapWindow(window);
@@ -111,5 +125,5 @@ int main() {
 void render() {
   glClear(GL_COLOR_BUFFER_BIT);
   
-  glDrawArrays(GL_TRIANGLES, 0, 3);
+  glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 }
