@@ -10,6 +10,7 @@ g++ Main.cpp ShaderUtil.cpp -o build/Reekium \
   -Wall \
   -Wextra \
   $(pkg-config --cflags --libs sdl2 glew) \
-  -lGL
+  -lGL \
+  -lSOIL
 
 echo "Build complete!"

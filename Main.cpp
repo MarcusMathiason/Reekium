@@ -4,6 +4,7 @@
 #include <iostream>
 #include "ShaderUtil.h"
 #include <chrono>
+#include <SOIL/SOIL.h>
 
 void render();
 
@@ -62,44 +63,68 @@ int main() {
   
   GLuint vao, vbo;
 
+  // Init vertex array object & buffer
   glGenVertexArrays(1, &vao);
   glBindVertexArray(vao);
 
   glGenBuffers(1, &vbo);
 
   GLfloat vertices[] = {
-  -0.5f,  0.5f, 1.0f, 0.0f, 0.0f, // Top-left
-         0.5f,  0.5f, 0.0f, 1.0f, 0.0f, // Top-right
-         0.5f, -0.5f, 0.0f, 0.0f, 1.0f, // Bottom-right
-        -0.5f, -0.5f, 1.0f, 1.0f, 1.0f,  // Bottom-left
-        0.0f, 0.5f, 1.0f, 0.0f, 0.0f // Top-middle
-    };
+    -0.5f,  0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, // Top-left
+         0.5f,  0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, // Top-right
+         0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, // Bottom-right
+        -0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f  // Bottom-left;
+  };
 
   glBindBuffer(GL_ARRAY_BUFFER, vbo);
   glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+  // Init element array
 
   GLuint ebo;
   glGenBuffers(1, &ebo);
 
   GLuint elements[] = {
-    1, 2, 0,
+    0, 1, 2,
     2, 3, 0
   };
   
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(elements), elements, GL_STATIC_DRAW);
+
+  // Init textures
+  GLuint tex;
+
+  glGenTextures(1, &tex);
+
+  glBindTexture(GL_TEXTURE_2D, tex);
+
+  // pos
+  glEnableVertexAttribArray(0);
+  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 7*sizeof(float), 0);
+
+  // col
+  glEnableVertexAttribArray(1);
+  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 7*sizeof(float), (void*)(2*sizeof(float)));
+
+  // tex
+  glEnableVertexAttribArray(2);
+  glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 7*sizeof(float), (void*)(5*sizeof(float)));
+
+
+  // Load texure image
   
-  GLint posAttrib = glGetAttribLocation(shaderProgram, "position");
-  glEnableVertexAttribArray(posAttrib);
+  int w, h;
+  unsigned char* image = SOIL_load_image("res/sample.png", &w, &h, 0, SOIL_LOAD_RGB);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
+  SOIL_free_image_data(image);
 
-  glVertexAttribPointer(posAttrib, 2, GL_FLOAT, GL_FALSE, 5*sizeof(float), 0);
-
-  GLint colAttrib = glGetAttribLocation(shaderProgram, "color");
-  glEnableVertexAttribArray(colAttrib);
-  glVertexAttribPointer(colAttrib, 3, GL_FLOAT, GL_FALSE, 5*sizeof(float), (void*)(2*sizeof(float)));
-
-
-  //auto t_start = std::chrono::high_resolution_clock::now();
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  
+  
   
   // main loop
   while (running) {
@@ -107,12 +132,22 @@ int main() {
       if (e.type == SDL_QUIT) running = false;
     }
 
-    //auto t_now = std::chrono::high_resolution_clock::now();
-    //float timeElapsed = std::chrono::duration_cast<std::chrono::duration<float>>(t_now - t_start).count();
 
     render();
+
     SDL_GL_SwapWindow(window);
   }
+
+  // Clean up before closing program
+  glDeleteTextures(1, &tex);
+  
+  glDeleteProgram(shaderProgram);
+  ShaderUtil::unloadShaders();
+  
+  glDeleteBuffers(1, &ebo);
+  glDeleteBuffers(1, &vbo);
+
+  glDeleteVertexArrays(1, &vao);
 
   SDL_GL_DeleteContext(ctx);
   SDL_DestroyWindow(window);
@@ -123,6 +158,7 @@ int main() {
 }
 
 void render() {
+  glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT);
   
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);

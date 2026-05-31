@@ -10,4 +10,6 @@ namespace ShaderUtil {
                              const std::string& fragmentPath);
 
   std::string loadFile(const std::string& path);
+
+  void unloadShaders();
 };

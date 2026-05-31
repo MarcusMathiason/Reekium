@@ -4,6 +4,8 @@
 #include <iostream>
 #include "ShaderUtil.h"
 
+GLuint vertexShader, fragmentShader;
+
 GLuint ShaderUtil::compileShader(GLenum type, const std::string& src) {
   GLuint shader = glCreateShader(type);
 
@@ -42,8 +44,8 @@ GLuint ShaderUtil::createShaderProgram(const std::string& vertexPath,
   std::string vertexSrc = loadFile(vertexPath);
   std::string fragmentSrc = loadFile(fragmentPath);
 
-  GLuint vertexShader = compileShader(GL_VERTEX_SHADER, vertexSrc);
-  GLuint fragmentShader = compileShader(GL_FRAGMENT_SHADER, fragmentSrc);
+  vertexShader = compileShader(GL_VERTEX_SHADER, vertexSrc);
+  fragmentShader = compileShader(GL_FRAGMENT_SHADER, fragmentSrc);
 
 
   GLuint program = glCreateProgram();
@@ -67,4 +69,9 @@ GLuint ShaderUtil::createShaderProgram(const std::string& vertexPath,
   glDeleteShader(fragmentShader);
 
   return program;
+}
+
+void ShaderUtil::unloadShaders() {
+  glDeleteShader(fragmentShader);
+  glDeleteShader(vertexShader);
 }
