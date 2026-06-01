@@ -108,7 +108,14 @@ int main() {
     0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f,
     0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f,
     -0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f,
-    -0.5f,  0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f
+    -0.5f,  0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f,
+
+    -1.0f, -1.0f, -0.5f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f,
+    1.0f, -1.0f, -0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f,
+    1.0f, 1.0f, -0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
+    1.0f, 1.0f, -0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
+    -1.0f, 1.0f, -0.5f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f,
+    -1.0f, -1.0f, -0.5f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f
   };
 
   glBindBuffer(GL_ARRAY_BUFFER, vbo);
@@ -145,9 +152,14 @@ int main() {
 
   // Enable z buffer
   glEnable(GL_DEPTH_TEST);
+  // Enable stencil buffer
+  glEnable(GL_STENCIL_TEST);
+  
+  glStencilFunc(GL_EQUAL, 2, 0XFF);
+  glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+  glStencilMask(0x00);
 
   // Load texure image
-  
   GLuint textures[2];
   glGenTextures(2, textures);
   
@@ -198,6 +210,8 @@ int main() {
   GLint uniProjection = glGetUniformLocation(shaderProgram, "projection");
   glUniformMatrix4fv(uniProjection, 1, GL_FALSE, glm::value_ptr(projection));
 
+  GLint uniColor = glGetUniformLocation(shaderProgram, "overrideColor");
+  
   auto t_start = std::chrono::high_resolution_clock::now();
 
   GLfloat angle = -45.0f;
@@ -218,6 +232,10 @@ int main() {
       }
     }
 
+    
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
     auto t_now = std::chrono::high_resolution_clock::now();
     float time = std::chrono::duration_cast<std::chrono::duration<float>>(t_now - t_start).count();
     t_start = t_now;
@@ -226,10 +244,38 @@ int main() {
     model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.0f, 0.0f));
     glUniformMatrix4fv(uniModel, 1, GL_FALSE, glm::value_ptr(model));
 
+    // Draw cube
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+
+    glEnable(GL_STENCIL_TEST);
+
+    // Draw floor
+    glStencilFunc(GL_ALWAYS, 1, 0xFF);
+    glStencilOp(GL_KEEP, GL_REPLACE, GL_REPLACE);
+    glStencilMask(0xFF);  // Write to stencil buffer
+    glDepthMask(GL_FALSE);  // DON'T write to z buffer
+    glClear(GL_STENCIL_BUFFER_BIT); // Clear stencil buffer
+
+    glDrawArrays(GL_TRIANGLES, 36, 6);
+
+    
+    // Draw cube reflection
+    
+    glStencilFunc(GL_EQUAL, 1, 0xFF); // Pass test if stencil value is 1
+    glStencilMask(0x00);  // DON'T write to stencil buffer
+    glDepthMask(GL_TRUE); //  Write to z buffer
+
+    model = glm::scale(glm::translate(model, glm::vec3(0, 0, -1)), glm::vec3(1, 1, -1));
+    glUniformMatrix4fv(uniModel, 1, GL_FALSE, glm::value_ptr(model));
+    glUniform3f(uniColor, 0.3f, 0.3f, 0.3f);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+    glUniform3f(uniColor, 1.0f, 1.0f, 1.0f);
+    
+    glDisable(GL_STENCIL_TEST);
+
     speed /= 1.0f + time;
     angle += 5 * speed * time;
 
-    render();
 
     SDL_GL_SwapWindow(window);
   }
@@ -252,9 +298,3 @@ int main() {
 
 }
 
-void render() {
-  glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  
-  glDrawArrays(GL_TRIANGLES, 0, 36);
-}
