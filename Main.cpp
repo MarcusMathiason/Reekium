@@ -152,26 +152,51 @@ int main() {
   
   // Transformations
 
+  
+  GLint uniModel = glGetUniformLocation(shaderProgram, "model");
+
+  glm::mat4 view = glm::lookAt(
+    glm::vec3(1.2f, 1.2f, 1.2f),
+    glm::vec3(0.0f, 0.0f, 0.0f),
+    glm::vec3(0.0f, 0.0f, 1.0f)
+  );
+  GLint uniView = glGetUniformLocation(shaderProgram, "view");
+  glUniformMatrix4fv(uniView, 1, GL_FALSE, glm::value_ptr(view));
+
+  glm::mat4 projection = glm::perspective(glm::radians(45.0f), 800.0f / 400.0f, 1.0f, 10.0f);
+  GLint uniProjection = glGetUniformLocation(shaderProgram, "projection");
+  glUniformMatrix4fv(uniProjection, 1, GL_FALSE, glm::value_ptr(projection));
+
   auto t_start = std::chrono::high_resolution_clock::now();
 
+  GLfloat angle = -45.0f;
+  GLfloat speed = 0.0f;
 
   // main loop
   while (running) {
     while (SDL_PollEvent(&e)) {
-      if (e.type == SDL_QUIT) running = false;
+      switch (e.type) {
+        case SDL_QUIT:
+          running = false;
+          break;
+        case SDL_KEYDOWN:
+          if (e.key.keysym.sym == SDLK_SPACE) {
+            speed = 180.0f;
+          }
+          break;
+      }
     }
 
-    
-  auto t_now = std::chrono::high_resolution_clock::now();
-  float time = std::chrono::duration_cast<std::chrono::duration<float>>(t_now - t_start).count();
+    auto t_now = std::chrono::high_resolution_clock::now();
+    float time = std::chrono::duration_cast<std::chrono::duration<float>>(t_now - t_start).count();
+    t_start = t_now;
 
-  glm::mat4 trans = glm::mat4(1.0f);
-  trans = glm::rotate(trans, time * glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-  glm::vec4 result = trans * glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
-  printf("%f, %f, %f\n", result.x, result.y, result.z);
+    glm::mat4 model = glm::mat4(1.0f);
+    model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.0f, 0.0f));
+    glUniformMatrix4fv(uniModel, 1, GL_FALSE, glm::value_ptr(model));
 
-  GLint uniTrans = glGetUniformLocation(shaderProgram, "transformation");
-  glUniformMatrix4fv(uniTrans, 1, GL_FALSE, glm::value_ptr(trans));
+    speed /= 1.0f + time;
+    angle += 5 * speed * time;
 
     render();
 
