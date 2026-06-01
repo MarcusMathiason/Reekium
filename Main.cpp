@@ -216,6 +216,7 @@ int main() {
 
   GLfloat angle = -45.0f;
   GLfloat speed = 0.0f;
+  glm::vec3 axis = glm::vec3(1.0f, 0.0f, 0.0f);
 
   // main loop
   while (running) {
@@ -225,10 +226,33 @@ int main() {
           running = false;
           break;
         case SDL_KEYDOWN:
-          if (e.key.keysym.sym == SDLK_SPACE) {
+          if (e.key.keysym.sym == SDLK_UP) {
+            axis = glm::vec3(1.0f, 0.0f, 0.0f);
             speed = 180.0f;
           }
+          if (e.key.keysym.sym == SDLK_DOWN) {
+            axis = glm::vec3(1.0f, 0.0f, 0.0f);
+            speed = -180.0f;
+          }
+          if (e.key.keysym.sym == SDLK_RIGHT) {
+            axis = glm::vec3(0.0f, 1.0f, 0.0f);
+            speed = 180.0f;
+          }
+          if (e.key.keysym.sym == SDLK_LEFT) {
+            axis = glm::vec3(0.0f, 1.0f, 0.0f);
+            speed = -180.0f;
+          }
+          if (e.key.keysym.sym == SDLK_PAGEUP) {
+            axis = glm::vec3(0.0f, 0.0f, 1.0f);
+            speed = 180.0f;
+          }
+          if (e.key.keysym.sym == SDLK_PAGEDOWN) {
+            axis = glm::vec3(0.0f, 0.0f, 1.0f);
+            speed = -180.0f;
+          }
           break;
+        case SDL_KEYUP:
+          speed = 0.0f;
       }
     }
 
@@ -241,7 +265,7 @@ int main() {
     t_start = t_now;
 
     glm::mat4 model = glm::mat4(1.0f);
-    model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.0f, 0.0f));
+    model = glm::rotate(model, glm::radians(angle), axis);
     glUniformMatrix4fv(uniModel, 1, GL_FALSE, glm::value_ptr(model));
 
     // Draw cube
@@ -251,7 +275,7 @@ int main() {
 
     // Draw floor
     glStencilFunc(GL_ALWAYS, 1, 0xFF);
-    glStencilOp(GL_KEEP, GL_REPLACE, GL_REPLACE);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
     glStencilMask(0xFF);  // Write to stencil buffer
     glDepthMask(GL_FALSE);  // DON'T write to z buffer
     glClear(GL_STENCIL_BUFFER_BIT); // Clear stencil buffer
