@@ -5,6 +5,9 @@
 #include "ShaderUtil.h"
 #include <chrono>
 #include <SOIL/SOIL.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 void render();
 
@@ -147,12 +150,28 @@ int main() {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   
+  // Transformations
+
+  auto t_start = std::chrono::high_resolution_clock::now();
+
+
   // main loop
   while (running) {
     while (SDL_PollEvent(&e)) {
       if (e.type == SDL_QUIT) running = false;
     }
 
+    
+  auto t_now = std::chrono::high_resolution_clock::now();
+  float time = std::chrono::duration_cast<std::chrono::duration<float>>(t_now - t_start).count();
+
+  glm::mat4 trans = glm::mat4(1.0f);
+  trans = glm::rotate(trans, time * glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+  glm::vec4 result = trans * glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
+  printf("%f, %f, %f\n", result.x, result.y, result.z);
+
+  GLint uniTrans = glGetUniformLocation(shaderProgram, "transformation");
+  glUniformMatrix4fv(uniTrans, 1, GL_FALSE, glm::value_ptr(trans));
 
     render();
 
